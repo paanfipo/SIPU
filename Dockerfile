@@ -31,15 +31,15 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-
 RUN npm install
 RUN npm run production
 
-# 8) Carpetas y permisos típicos de Laravel
+# 8) Carpetas y permisos típicos de Laravel (reforzado para auth/sesiones/cache)
 RUN mkdir -p storage/framework/cache/data \
     storage/framework/sessions \
     storage/framework/testing \
     storage/framework/views \
     storage/logs \
     bootstrap/cache \
- && chown -R www-data:www-data storage bootstrap/cache \
- && chmod -R 775 storage bootstrap/cache
+ && chmod -R ug+rwx storage bootstrap/cache \
+ && chown -R www-data:www-data storage bootstrap/cache
 
 # 9) Railway expone un PORT dinámico
 EXPOSE 8080
