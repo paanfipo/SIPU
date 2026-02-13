@@ -10,10 +10,13 @@ RUN apt-get update -y && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql zip
 
-# 3. CORRECCIÓN MPM: Desactivar event y activar prefork
-RUN a2dismod mpm_event && a2enmod mpm_prefork
+# 3. SOLUCIÓN RADICAL MPM: Borrar archivos de configuración de otros MPMs
+# Esto elimina físicamente la posibilidad de que carguen mpm_event o mpm_worker
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf \
+    && rm -f /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf \
+    && a2enmod mpm_prefork
 
-# 4. Habilitar Apache Rewrite (necesario para Laravel)
+# 4. Habilitar Apache Rewrite
 RUN a2enmod rewrite
 
 # 5. Copiar código y Composer
