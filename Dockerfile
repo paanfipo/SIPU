@@ -10,11 +10,14 @@ RUN apt-get update -y && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql zip
 
-# 3. LIMPIEZA TOTAL DE MPM: 
-# Desactivamos módulos conflictivos y forzamos prefork a nivel de configuración de Apache
-RUN a2dismod mpm_event mpm_worker || true && \
-    a2enmod mpm_prefork && \
-    echo "ServerName localhost" >> /etc/apache2/apache2.conf
+# 3. Forzar un solo MPM (prefork) eliminando cualquier MPM residual
+RUN a2dismod mpm_event mpm_worker mpm_prefork || true \
+ && rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf \
+          /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf \
+          /etc/apache2/mods-enabled/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.conf \
+ && a2enmod mpm_prefork \
+ && echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
 
 # 4. Habilitar Apache Rewrite para Laravel
 RUN a2enmod rewrite
