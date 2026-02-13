@@ -1,6 +1,6 @@
 FROM php:7.4-apache
 
-# 1. Instalación de dependencias del sistema
+# 1. Dependencias del sistema
 RUN apt-get update -y && apt-get install -y \
     libpng-dev libjpeg-dev libfreetype6-dev \
     libzip-dev libpq-dev zip unzip git \
@@ -10,24 +10,24 @@ RUN apt-get update -y && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql zip
 
-# 3. SOLUCIÓN RADICAL MPM: Borrar archivos de configuración de otros MPMs
-# Esto elimina físicamente la posibilidad de que carguen mpm_event o mpm_worker
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf \
-    && rm -f /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf \
-    && a2enmod mpm_prefork
+# 3. LIMPIEZA TOTAL DE MPM: 
+# Desactivamos módulos conflictivos y forzamos prefork a nivel de configuración de Apache
+RUN a2dismod mpm_event mpm_worker || true && \
+    a2enmod mpm_prefork && \
+    echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-# 4. Habilitar Apache Rewrite
+# 4. Habilitar Apache Rewrite para Laravel
 RUN a2enmod rewrite
 
-# 5. Copiar código y Composer
+# 5. Directorio de trabajo y código
 WORKDIR /var/www/html
 COPY . .
 COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
 
-# 6. Instalación de dependencias (sin scripts)
+# 6. Instalación de dependencias (sin scripts para evitar el error 255)
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
-# 7. Asegurar que las carpetas existan y dar permisos
+# 7. Crear carpetas necesarias y dar permisos
 RUN mkdir -p /var/www/html/storage/framework/cache/data \
     && mkdir -p /var/www/html/storage/framework/sessions \
     && mkdir -p /var/www/html/storage/framework/testing \
@@ -37,8 +37,12 @@ RUN mkdir -p /var/www/html/storage/framework/cache/data \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 8. Configuración de Apache
+# 8. Configurar el puerto y el DocumentRoot
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+
+# 9. VARIABLE DE ENTORNO CRÍTICA PARA APACHE
+# Esto le dice a Apache que no intente cargar nada extra por su cuenta
+ENV APACHE_ARGUMENTS="-D FOREGROUND"
 
 EXPOSE 80
 CMD ["apache2-foreground"]
