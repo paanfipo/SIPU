@@ -1,51 +1,36 @@
-FROM php:7.4-apache
+FROM php:7.4-cli
 
-# 1. Dependencias del sistema
+# Dependencias del sistema
 RUN apt-get update -y && apt-get install -y \
+    git unzip zip \
     libpng-dev libjpeg-dev libfreetype6-dev \
-    libzip-dev libpq-dev zip unzip git \
+    libzip-dev libpq-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 2. Extensiones de PHP
+# Extensiones PHP necesarias (gd, zip, pgsql)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql zip
 
-# 3. Forzar un solo MPM (prefork) eliminando cualquier MPM residual
-RUN a2dismod mpm_event mpm_worker mpm_prefork || true \
- && rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf \
-          /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf \
-          /etc/apache2/mods-enabled/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.conf \
- && a2enmod mpm_prefork \
- && echo "ServerName localhost" >> /etc/apache2/apache2.conf
-
-
-# 4. Habilitar Apache Rewrite para Laravel
-RUN a2enmod rewrite
-
-# 5. Directorio de trabajo y código
-WORKDIR /var/www/html
-COPY . .
+# Composer
 COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
 
-# 6. Instalación de dependencias (sin scripts para evitar el error 255)
+WORKDIR /app
+COPY . .
+
+# Dependencias PHP
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
-# 7. Crear carpetas necesarias y dar permisos
-RUN mkdir -p /var/www/html/storage/framework/cache/data \
-    && mkdir -p /var/www/html/storage/framework/sessions \
-    && mkdir -p /var/www/html/storage/framework/testing \
-    && mkdir -p /var/www/html/storage/framework/views \
-    && mkdir -p /var/www/html/storage/logs \
-    && mkdir -p /var/www/html/bootstrap/cache \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Carpetas y permisos típicos de Laravel
+RUN mkdir -p storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/testing \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache \
+ && chown -R www-data:www-data storage bootstrap/cache \
+ && chmod -R 775 storage bootstrap/cache
 
-# 8. Configurar el puerto y el DocumentRoot
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+# Railway expone un PORT dinámico
+EXPOSE 8080
 
-# 9. VARIABLE DE ENTORNO CRÍTICA PARA APACHE
-# Esto le dice a Apache que no intente cargar nada extra por su cuenta
-ENV APACHE_ARGUMENTS="-D FOREGROUND"
-
-EXPOSE 80
-CMD ["apache2-foreground"]
+CMD php -S 0.0.0.0:${PORT:-8080} -t public
