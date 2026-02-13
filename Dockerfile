@@ -10,19 +10,21 @@ RUN apt-get update -y && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql zip
 
-# 3. Habilitar Apache Rewrite
+# 3. CORRECCIÓN MPM: Desactivar event y activar prefork
+RUN a2dismod mpm_event && a2enmod mpm_prefork
+
+# 4. Habilitar Apache Rewrite (necesario para Laravel)
 RUN a2enmod rewrite
 
-# 4. Copiar código y Composer
+# 5. Copiar código y Composer
 WORKDIR /var/www/html
 COPY . .
 COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
 
-# 5. Instalación de dependencias (sin scripts)
+# 6. Instalación de dependencias (sin scripts)
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
-# 6. Asegurar que las carpetas existan y dar permisos
-# Aquí creamos las carpetas por si acaso no están en GitHub
+# 7. Asegurar que las carpetas existan y dar permisos
 RUN mkdir -p /var/www/html/storage/framework/cache/data \
     && mkdir -p /var/www/html/storage/framework/sessions \
     && mkdir -p /var/www/html/storage/framework/testing \
@@ -32,7 +34,7 @@ RUN mkdir -p /var/www/html/storage/framework/cache/data \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 7. Configuración de Apache
+# 8. Configuración de Apache
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
 EXPOSE 80
