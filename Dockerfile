@@ -1,20 +1,10 @@
-FROM php:8.2-cli
-
-RUN apt-get update && apt-get install -y \
-    git unzip libzip-dev libpng-dev libonig-dev libxml2-dev libpq-dev \
- && docker-php-ext-install pdo pdo_pgsql zip \
- && rm -rf /var/lib/apt/lists/*
-
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-WORKDIR /app
-COPY . .
-
-RUN composer install --no-dev --optimize-autoloader
-
-RUN php artisan config:cache || true
-RUN php artisan route:cache || true
-RUN php artisan view:cache || true
-
-EXPOSE 8080
-CMD php -S 0.0.0.0:${PORT:-8080} -t public
+FROM php:7.4-apache
+RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev zip libzip-dev git && \
+    docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install gd pdo pdo_pgsql zip
+COPY . /var/www/html
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN composer install --ignore-platform-reqs --no-dev
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/0000-default.conf
+EXPOSE 80
