@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+title: "SIPU: Sistema de Información para Procesos Universitarios"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: "Figueroa-Polanco"
+    given-names: "Paula Andrea"
+    orcid: "https://orcid.org/0000-0003-3552-4499"
+version: "1.0"
+date-released: "2026-07-07"
+repository-code: "https://github.com/paanfipo/SIPU"
+license: "MIT"
