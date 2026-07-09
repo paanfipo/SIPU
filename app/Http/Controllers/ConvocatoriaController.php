@@ -275,6 +275,11 @@ class ConvocatoriaController extends Controller
     public function checkin(Request $request){
         
         $convocatoria = Convocatoria::find($request->convocatoria_id);
+        if($convocatoria == null){
+            return back()
+                ->with('error', 'La convocatoria seleccionada no existe.')->withInput();
+        }
+
         $etapas = $convocatoria->etapas;
         $emprendimiento = (isset($request->emprendimiento))?  $request->emprendimiento : null;
         $sync_data_assig = [];
@@ -291,10 +296,16 @@ class ConvocatoriaController extends Controller
             break;             
         }
 
-        $convocatoria->etapaAvance()->attach($sync_data_assig);
-
         //Regsitro de asistencia de la actividade de la primera etapa de la convocatoria
         $cronogramas =  $convocatoria->cronogramas->whereIn('actividad_id',$arrayid_actividades);
+        $cronograma_notificacion = $cronogramas->first();
+
+        if($cronograma_notificacion == null){
+            return back()
+                ->with('error', 'La convocatoria no tiene cronogramas registrados para la primera etapa.')->withInput();
+        }
+
+        $convocatoria->etapaAvance()->attach($sync_data_assig);
 
         foreach($cronogramas as $cronograma){
 
@@ -315,7 +326,7 @@ class ConvocatoriaController extends Controller
         }
         
         //Se genera notificación para que el usuario llene el formulario de caracterizacion emprendimiento en la etapa de sensibilización prerequisito para seguir
-        $return_noty = $this->envioNotificacion(\Auth::user(),$convocatoria,$cronograma);
+        $return_noty = $this->envioNotificacion(\Auth::user(),$convocatoria,$cronograma_notificacion);
 
         if($return_noty['type'] == "error"){
             return back()
@@ -566,9 +577,20 @@ class ConvocatoriaController extends Controller
 
                 //Se genera notificación para que el usuario llene el formulario de caracterizacion emprendimiento en la etapa de sensibilización prerequisito para seguir
                 $etapa = Etapa::where('nombre','SENSIBILIZACIÓN')->first();
+                if($etapa == null){
+                    throw new \Exception('No existe la etapa SENSIBILIZACIÓN.');
+                }
+
                 $actividades = $etapa->actividades;
+                if(count($actividades) == 0){
+                    throw new \Exception('La etapa SENSIBILIZACIÓN no tiene actividades registradas.');
+                }
 
                 $cronograma = Cronograma::where('convocatoria_id',$convocatoria->id)->where('actividad_id',$actividades[0]->id)->first();
+                if($cronograma == null){
+                    throw new \Exception('La convocatoria no tiene cronograma registrado para la primera actividad de sensibilización.');
+                }
+
                 $return_noty = $this->envioNotificacion($user,$convocatoria,$cronograma);
 
                 if($return_noty['type'] == "error"){
@@ -580,9 +602,11 @@ class ConvocatoriaController extends Controller
 
             DB::commit();
         }catch (\Exception $e) {
+            DB::rollBack();
             return back()
             ->with('error', "Hubo un error comuniquese con soporte!!<br>".$e->getMessage())->withInput();
         } catch (\Throwable $e) {
+            DB::rollBack();
             return back()
                 ->with('error', "Hubo un error comuniquese con soporte!!<br>".$e->getMessage())->withInput();
         }

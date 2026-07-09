@@ -8,9 +8,9 @@
     <tbody>
       <tr>
         <th>Fecha Y Hora Inicio: </th>
-        <td>@if( $cronograma !== null) {{$cronograma->fecha_hora_inicio->format('Y-m-d H:i:s')}} @endif</td>
+        <td>@if( $cronograma !== null && $cronograma->fecha_hora_inicio !== null) {{$cronograma->fecha_hora_inicio->format('Y-m-d H:i:s')}} @endif</td>
         <th>Fecha Y Hora Fin: </th>
-        <td>@if( $cronograma !== null) {{$cronograma->fecha_hora_fin->format('Y-m-d H:i:s')}} @endif</td>        
+        <td>@if( $cronograma !== null && $cronograma->fecha_hora_fin !== null) {{$cronograma->fecha_hora_fin->format('Y-m-d H:i:s')}} @endif</td>
       </tr>   
       <tr>
         <th>Duración:</th>
@@ -21,7 +21,7 @@
       
       <tr>
         <th>Asesor:</th>
-        <td colspan="3">@if( $cronograma !== null) {{$cronograma->asesor->name}} @endif</td>
+        <td colspan="3">@if( $cronograma !== null && $cronograma->asesor !== null) {{$cronograma->asesor->name}} @endif</td>
       </tr>
     </tbody>
   </table>

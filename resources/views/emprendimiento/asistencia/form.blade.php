@@ -200,7 +200,7 @@
                                                                                                                         ->first();
                                                                                                         @endphp
                                                                                                     <div class="col-md-12" id="asistencia_asesor_{{$asistencia->id}}">
-                                                                                                        <p>{{$asesor->name}}</p>
+                                                                                                        <p>@if($asesor !== null) {{$asesor->name}} @endif</p>
                                                                                                     </div>
                                                                                                 @endif
                                                                                                 

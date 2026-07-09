@@ -89,8 +89,7 @@ class AsistenciaController extends Controller
      */
     public function show($id)
     {     
-        $convocatoria = Convocatoria::find($id);        
-        $result = $this->validarAvance(5,1,2);
+        $convocatoria = Convocatoria::findOrFail($id);
         $asesores  = User::role('Asesor')->get();        
         return view('emprendimiento.asistencia.show',['convocatoria'=>$convocatoria,'asesores'=>$asesores]);
     }
@@ -220,6 +219,10 @@ class AsistenciaController extends Controller
         //Primero validar si los avances (etapas) anteriores estan completos
         $bandera = true;
         $convocatoria = Convocatoria::find($convocatoria_id);
+        if($convocatoria == null){
+            return false;
+        }
+
         $etapas = $convocatoria->etapas;
         
         foreach($etapas as $etapa){
@@ -238,6 +241,10 @@ class AsistenciaController extends Controller
 
         //Validar si ya termino todas las actividades de la etapa donde se encuentra
         $etapa = Etapa::find($etapa_id);
+        if($etapa == null){
+            return false;
+        }
+
         $actividades = $etapa->actividades->toArray();
         $actividad_id = array_column($actividades,'id');
         $cronogramas = Cronograma::select("*")->where('convocatoria_id',$convocatoria_id)->whereIn('actividad_id',$actividad_id)->get();
