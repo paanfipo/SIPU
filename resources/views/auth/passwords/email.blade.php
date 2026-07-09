@@ -24,7 +24,7 @@
 
 
     <!-- sweetalert2 -->
-    <link href="{{ asset('librerias/sweetalert2/dist/css/sweetalert2.css') }}" rel="stylesheet">
+    <link href="{{ asset('librerias/sweetalert2/dist/sweetalert2.css') }}" rel="stylesheet">
 
     <!-- DataTables -->
     <link rel="stylesheet" type="text/css" href="{{ asset('librerias/DataTables/datatables.min.css') }}"/>
@@ -151,7 +151,7 @@
         <script src="{{ asset('js/app.js') }}" ></script>
 
         <!-- Fontawesome -->
-        <script src="{{ asset('librerias/fontawesome/js/all.js') }}" ></script>
+        <script src="{{ asset('admin/vendor/fontawesome-free/js/all.js') }}" ></script>
 
         <!-- Jquery -->
         <script src="{{ asset('librerias/jquery/jquery-3.4.1.min.js') }}" ></script>
