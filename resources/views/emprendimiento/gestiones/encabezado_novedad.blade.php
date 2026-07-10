@@ -15,9 +15,9 @@
               </tr>
               <tr>
                 <th>Fecha Inicio: </th>
-                <td>@if( $convocatoria !== null) {{$convocatoria->fecha_inicio->format('Y-m-d')}} @endif</td>
+                <td>@if( $convocatoria !== null) {{ optional($convocatoria->fecha_inicio)->format('Y-m-d') }} @endif</td>
                 <th>Fecha Fin: </th>
-                <td>@if( $convocatoria !== null) {{$convocatoria->fecha_fin->format('Y-m-d')}} @endif</td>        
+                <td>@if( $convocatoria !== null) {{ optional($convocatoria->fecha_fin)->format('Y-m-d') }} @endif</td>
               </tr>
             </tbody>
         </table>
@@ -30,15 +30,15 @@
           <tbody>
             <tr>
                   <th>Etapa:</th>
-                  <td>@if( $cronograma !== null) {{$cronograma->actividad->etapa->nombre}} @endif</td>
+                  <td>@if( $cronograma !== null) {{ optional(optional($cronograma->actividad)->etapa)->nombre }} @endif</td>
                   <th>Actividad:</th>
-                  <td>@if( $cronograma !== null) {{$cronograma->actividad->nombre}} @endif</td>
+                  <td>@if( $cronograma !== null) {{ optional($cronograma->actividad)->nombre }} @endif</td>
             </tr>
             <tr>
                   <th>Fecha Hora Inicio: </th>
-                  <td>@if( $cronograma !== null) {{$cronograma->fecha_hora_inicio->format('Y-m-d H:i:s')}} @endif</td>
+                  <td>@if( $cronograma !== null) {{ optional($cronograma->fecha_hora_inicio)->format('Y-m-d H:i:s') }} @endif</td>
                   <th>Fecha Hora Fin: </th>
-                  <td>@if( $cronograma !== null) {{$cronograma->fecha_hora_fin->format('Y-m-d H:i:s')}} @endif</td> 
+                  <td>@if( $cronograma !== null) {{ optional($cronograma->fecha_hora_fin)->format('Y-m-d H:i:s') }} @endif</td>
             </tr>
             <tr>
               <th>Asesor:</th>
