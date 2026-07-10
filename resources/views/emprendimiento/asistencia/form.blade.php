@@ -501,8 +501,8 @@
                                 $("#button_asistencia_"+asistencia).remove();
 
                                 Swal.fire({
-                                    icon: 'info',
-                                    title: 'Oops...',
+                                    icon: 'success',
+                                    title: 'Listo',
                                     text: 'El asesor fue asignado con exito!'
                                 });
                             }
