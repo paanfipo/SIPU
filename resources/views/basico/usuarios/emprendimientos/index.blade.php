@@ -12,9 +12,9 @@
     <div class="card shadow mb-4">
         <div class="card-header py-3">
             <div class="pull-right">
-                @can('Crear Emprendimiento')
+                @if(auth()->user()->can('Crear Emprendimiento') || auth()->user()->hasAnyRole(['Asesor','Coordinador de emprendimiento']))
                     <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#exampleModal" data-whatever="@mdo"><i class="fa fa-plus"></i>  Crear Emprendimiento</button>
-                @endcan
+                @endif
             </div>
         </div>
         <div class="card-body">

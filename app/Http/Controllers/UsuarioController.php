@@ -60,7 +60,7 @@ class UsuarioController extends Controller
         $this->middleware(['permission:Crear Usuario'])->only(['create','store']);
         $this->middleware(['permission:Actualizar Usuario'])->only(['edit','update']);
         $this->middleware(['permission:Detalle Usuario'])->only(['show']);
-        $this->middleware(['permission:Listar Emprendimiento'])->only(['emprendimientos']);
+        $this->middleware(['role_or_permission:Listar Emprendimiento|Asesor|Coordinador de emprendimiento'])->only(['emprendimientos']);
     }
 
     /**

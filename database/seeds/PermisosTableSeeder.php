@@ -688,6 +688,9 @@ class PermisosTableSeeder extends Seeder
 
         $permision_rol_asesor = [
                                     'Actualizar Usuario',
+                                    'Crear Emprendimiento',
+                                    'Actualizar Emprendimiento',
+                                    'Listar Emprendimiento',
                                     'Listar Gestiones',
                                     'Novedades', //Novedades en preincubación y aceleración
                                     'Solicitudes', //Sin implementar
@@ -755,6 +758,9 @@ class PermisosTableSeeder extends Seeder
 
         $permision_rol_coordinador_emprendimiento = [
                                 'Actualizar Usuario',
+                                'Crear Emprendimiento',
+                                'Actualizar Emprendimiento',
+                                'Listar Emprendimiento',
                                 'Crear Convocatoria',
                                 'Actualizar Convocatoria',
                                 'Listar Convocatorias',
