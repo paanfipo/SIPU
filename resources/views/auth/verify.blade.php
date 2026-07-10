@@ -125,10 +125,17 @@
                                     </div>
                                 @endif
 
+                                @if (session('error'))
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ session('error') }}
+                                    </div>
+                                @endif
+
                                     <p>Antes de continuar, consulte su correo electrónico para ver si hay un enlace de verificación.
                                     Si no recibió el correo electrónico, </p>
                                     
                                     <form method="POST" action="{{ route('verification.resend') }}">
+                                        @csrf
                                         <button type="submit" class="btn btn-danger">clic aquí para solicitar otro</button> 
                                     </form>.
                             </div>                        
