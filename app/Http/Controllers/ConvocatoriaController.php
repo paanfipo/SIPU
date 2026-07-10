@@ -592,6 +592,7 @@ class ConvocatoriaController extends Controller
                 $this->registroConvocatoria($user,$emprendimiento,$request->convocatoria_id);
 
                 //Se genera notificación para que el usuario llene el formulario de caracterizacion emprendimiento en la etapa de sensibilización prerequisito para seguir
+                if(false){
                 try {
                     $etapa = Etapa::where('nombre','SENSIBILIZACIÓN')->first();
                     if($etapa == null){
@@ -620,6 +621,7 @@ class ConvocatoriaController extends Controller
                         'error' => $e->getMessage(),
                     ]);
                     $warning = 'El registro fue exitoso, pero no se pudo enviar la notificacion.';
+                }
                 }
                 
             }
