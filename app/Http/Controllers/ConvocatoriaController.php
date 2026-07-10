@@ -376,6 +376,17 @@ class ConvocatoriaController extends Controller
             try {
                 $import = new RegistroMasivoConvocatoriaImport($request->convocatoria_id);
                 $import->import(request()->file('list'));
+            }catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+                // El archivo tiene filas con datos inválidos (p. ej. correo o
+                // nombre vacíos). Mostramos fila + columna + motivo para que el
+                // coordinador pueda corregir el archivo.
+                $mensajes = [];
+                foreach ($e->failures() as $falla) {
+                    $mensajes[] = "Fila ".$falla->row().": ".implode(", ", $falla->errors());
+                }
+                return back()
+                    ->with('error', "El archivo tiene datos inválidos:<br>".implode("<br>", array_slice($mensajes, 0, 15)))
+                    ->withInput();
             }catch (\Exception $e) {
                 return back()
                 ->with('error', "Hubo un error comuniquese con soporte!!<br>".$e->getMessage())->withInput();

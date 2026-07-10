@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
@@ -24,7 +25,7 @@ use App\Notifications\Novedades;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailNovedades;
 
-class RegistroMasivoConvocatoriaImport implements ToModel, WithBatchInserts, WithHeadingRow,SkipsOnError, WithValidation
+class RegistroMasivoConvocatoriaImport implements ToModel, WithBatchInserts, WithHeadingRow,SkipsOnError, WithValidation, SkipsEmptyRows
 {
     use Importable, SkipsErrors;
     public $convocatoria_id = null;
@@ -88,11 +89,41 @@ class RegistroMasivoConvocatoriaImport implements ToModel, WithBatchInserts, Wit
         // Handle the exception how you'd like.
     }
 
+    /**
+     * Normaliza cada fila ANTES de validarla. El formato oficial descargable
+     * es un export de Google Forms cuyo encabezado de correo es
+     * "Dirección de correo electrónico *", que Laravel Excel convierte en la
+     * clave "direccion_de_correo_electronico" (no "email"). Aquí mapeamos ese
+     * encabezado (y otras variantes) a la clave "email" para que la validación
+     * y el registro funcionen tanto con la plantilla como con un archivo propio.
+     *
+     * @param  array  $row
+     * @param  int    $index
+     * @return array
+     */
+    public function prepareForValidation($row, $index)
+    {
+        if (empty($row['email'])) {
+            foreach (['direccion_de_correo_electronico', 'correo_electronico', 'correo'] as $clave) {
+                if (!empty($row[$clave])) {
+                    $row['email'] = $row[$clave];
+                    break;
+                }
+            }
+        }
+
+        if (!empty($row['email'])) {
+            $row['email'] = trim(mb_strtolower($row['email']));
+        }
+
+        return $row;
+    }
+
     public function rules(): array
     {
         return [
              // Above is alias for as it always validates in batches
-             'email' => ['required'],
+             'email' => ['required', 'email'],
              'nombres_y_apellidos' => ['required']
         ];
     }
@@ -108,7 +139,8 @@ class RegistroMasivoConvocatoriaImport implements ToModel, WithBatchInserts, Wit
     public function customValidationMessages()
     {
         return [
-            'email.required' => 'El email es requerido',
+            'email.required' => 'El correo electrónico es requerido',
+            'email.email' => 'El correo electrónico no tiene un formato válido',
             'nombres_y_apellidos.required' => 'El nombre y apellido es requerido',
         ];
     }
