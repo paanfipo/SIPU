@@ -149,11 +149,11 @@
                                                                                                         @endphp
                                                                                                         <!--<span>{{var_dump($variablex)}}</span>-->
                                                                                                                 
-                                                                                                            @if($etapaCarac->pivot->caracterizacion === 0)
+                                                                                                            @if($etapaCarac->pivot->caracterizacion == 0)
                                                                                                                 <a href="{{route('asistencia.caracterizacion_sensibilizacion',[$convocatoria->id,$asistencia->user_id])}}" target="_blank"><i class="far fa-thumbs-down fa-2x"></i>Formulario caracterización para pasar de sensibilización a preincubación</a>                                                                                                                                                                   
                                                                                                             @endif
 
-                                                                                                            @if($etapaCarac->pivot->caracterizacion === 1)
+                                                                                                            @if($etapaCarac->pivot->caracterizacion == 1)
                                                                                                                 <a href="{{route('asistencia.caracterizacion_sensibilizacion',[$convocatoria->id,$asistencia->user_id])}}" target="_blank"><i class="fas fa-thumbs-up fa-2x"></i>Formulario caracterización para pasar de sensibilización a preincubación</a>
                                                                                                             @endif
 
@@ -172,11 +172,11 @@
 
                                                                                                         @if($etapaCarac->nombre == 'INCUBACIÓN (ASESORIAS)')
 
-                                                                                                            @if($etapaCarac->pivot->caracterizacion === 0)
+                                                                                                            @if($etapaCarac->pivot->caracterizacion == 0)
                                                                                                                 <a href="{{route('asistencia.caracterizacion_empresarial',[$convocatoria->id,$asistencia->user_id])}}" target="_blank"><i class="far fa-thumbs-down fa-2x"></i>Formulario caracterización para pasar de incubación a aceleración</a>                                                                                                                                                                   
                                                                                                             @endif
 
-                                                                                                            @if($etapaCarac->pivot->caracterizacion === 1)
+                                                                                                            @if($etapaCarac->pivot->caracterizacion == 1)
                                                                                                                 <a href="{{route('asistencia.caracterizacion_empresarial',[$convocatoria->id,$asistencia->user_id])}}" target="_blank"><i class="fas fa-thumbs-up fa-2x"></i>Formulario caracterización para pasar de incubación a aceleración</a>
                                                                                                             @endif
 
