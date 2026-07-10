@@ -214,45 +214,21 @@ class ConvocatoriaController extends Controller
     public function registrarse($id)
     {
         $convocatoria = Convocatoria::find($id);
-
-        $registros = \Auth::user()->convocatorias->where('id',$id);
-        
-        $emprendimientos = \Auth::user()->emprendimientos;
-        $checkin_on = true;
-        $convocatoria_etapas = $convocatoria->etapas;
-        $mensajes = array();
-        foreach($convocatoria_etapas as $etapa){
-
-            $actividades = $etapa->actividades->toArray();
-            if(count($actividades) <= 0){
-                $mensajes[]= "La etapa ".$etapa->nombre." de esta convocatoria no tiene actividades registradas.\n";
-            }else{
-                $actividad_id = array_column($actividades,'id');
-                $cronogramas = Cronograma::select("*")->where('convocatoria_id',$id)->whereIn('actividad_id',$actividad_id)->get();
-                
-                if(count($cronogramas) <= 0){
-                    $mensajes[]= "Las actividades de la etapa ".$etapa->nombre." de esta convocatoria no tiene cronogramas registrados.\n";
-                }
-            }         
-            
+        if($convocatoria == null){
+            return redirect()->route('convocatorias.index')
+                ->with('error', 'La convocatoria seleccionada no existe.');
         }
+
+        $emprendimientos = \Auth::user()->emprendimientos;
+        $validacion = $this->validarInscripcionConvocatoria($convocatoria,\Auth::user());
+        $mensajes = $validacion['mensajes'];
         //session()->flush();
 
         /*if(count($emprendimientos) <= 0){
             $mensajes[]= 'Para registrarse a una convocatoria debe tener al menos un empredimiento registrado. \n';            
         }*/
 
-        if(count($registros) > 0){
-            $mensajes[]= 'El usuario ya se encuentra registrado en la convocatoria '.$convocatoria->nombre.'.\n';
-        }
-
-        if($convocatoria->getOriginal('estado') != 1){
-            $mensajes[]= 'No se puede registrar, la convocatoria '.$convocatoria->nombre.' se encuentra en estado '.$convocatoria->estado.'.\n';
-        }
-
-        if(count($mensajes) > 0){
-            $checkin_on = false;            
-        }
+        $checkin_on = count($mensajes) == 0;
 
         return view('emprendimiento.convocatorias.checkin',[
             'convocatoria'=>$convocatoria,
@@ -280,24 +256,23 @@ class ConvocatoriaController extends Controller
                 ->with('error', 'La convocatoria seleccionada no existe.')->withInput();
         }
 
-        $etapas = $convocatoria->etapas;
-        $emprendimiento = (isset($request->emprendimiento))?  $request->emprendimiento : null;
-        $sync_data_assig = [];
-        $arrayid_actividades = [];
-        foreach($etapas as $etapa){
-            $sync_data_assig[$etapa->id] = [
-                                        'emprendimiento' => $emprendimiento,
-                                        'finalizado' => false,
-                                        'user_id' => \Auth::user()->id,
-                                        ];
-
-            $arrayid_actividades = array_column($etapa->actividades->toArray(),'id');
-                                        
-            break;             
+        $validacion = $this->validarInscripcionConvocatoria($convocatoria,\Auth::user());
+        if(count($validacion['mensajes']) > 0){
+            return back()
+                ->with('error', implode(' ', $validacion['mensajes']))->withInput();
         }
 
+        $primera_etapa = $validacion['primera_etapa'];
+        $cronogramas = $validacion['cronogramas'];
+        $emprendimiento = (isset($request->emprendimiento))?  $request->emprendimiento : null;
+        $sync_data_assig = [];
+        $sync_data_assig[$primera_etapa->id] = [
+            'emprendimiento' => $emprendimiento,
+            'finalizado' => false,
+            'user_id' => \Auth::user()->id,
+        ];
+
         //Regsitro de asistencia de la actividade de la primera etapa de la convocatoria
-        $cronogramas =  $convocatoria->cronogramas->whereIn('actividad_id',$arrayid_actividades);
         $cronograma_notificacion = $cronogramas->first();
 
         if($cronograma_notificacion == null){
@@ -335,6 +310,48 @@ class ConvocatoriaController extends Controller
             return redirect()->route('convocatorias.index')->with('info','El registro fue con éxito');
         }        
         
+    }
+
+    private function validarInscripcionConvocatoria($convocatoria,$user)
+    {
+        $mensajes = [];
+        $primera_etapa = null;
+        $cronogramas = collect();
+
+        $registros = $user->convocatorias->where('id',$convocatoria->id);
+        if(count($registros) > 0){
+            $mensajes[]= 'El usuario ya se encuentra registrado en la convocatoria '.$convocatoria->nombre.'.';
+        }
+
+        if($convocatoria->getOriginal('estado') != 1){
+            $mensajes[]= 'No se puede registrar, la convocatoria '.$convocatoria->nombre.' se encuentra en estado '.$convocatoria->estado.'.';
+        }
+
+        $primera_etapa = $convocatoria->etapas->first();
+        if($primera_etapa == null){
+            $mensajes[]= 'La convocatoria '.$convocatoria->nombre.' no tiene etapas registradas.';
+        }else{
+            $actividades = $primera_etapa->actividades->toArray();
+            if(count($actividades) <= 0){
+                $mensajes[]= "La primera etapa ".$primera_etapa->nombre." de esta convocatoria no tiene actividades registradas.";
+            }else{
+                $actividad_id = array_column($actividades,'id');
+                $cronogramas = Cronograma::select("*")
+                    ->where('convocatoria_id',$convocatoria->id)
+                    ->whereIn('actividad_id',$actividad_id)
+                    ->get();
+
+                if(count($cronogramas) <= 0){
+                    $mensajes[]= "Las actividades de la primera etapa ".$primera_etapa->nombre." de esta convocatoria no tienen cronogramas registrados.";
+                }
+            }
+        }
+
+        return [
+            'mensajes' => $mensajes,
+            'primera_etapa' => $primera_etapa,
+            'cronogramas' => $cronogramas,
+        ];
     }
 
     /**
@@ -784,6 +801,23 @@ class ConvocatoriaController extends Controller
             "url"=> 'asistencia.caracterizacion_sensibilizacion',
             "message"=>'Haga click aquí, para llenar el formulario de caracterización del emprendimiento para pasar a la siguiente etapa!',
         ]);
+
+        try {
+            $user->notify(new Novedades($collection));
+        } catch (\Throwable $e) {
+            // La inscripcion no debe fallar por problemas en notificaciones.
+        }
+
+        try {
+            Mail::to($collection["para_email"])->send(new EmailNovedades($collection));
+        } catch (\Throwable $e) {
+            // La inscripcion no debe fallar por problemas en el correo.
+        }
+
+        return [
+            'type' => 'info',
+            'mensaje' => 'La novedad fue enviada con exito !!',
+        ];
 
         //Envio a varios usuarios
         //if(\Notification::send(\Auth::user(),new Novedades($collection))){
