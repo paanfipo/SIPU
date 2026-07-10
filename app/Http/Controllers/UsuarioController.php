@@ -60,7 +60,6 @@ class UsuarioController extends Controller
         $this->middleware(['permission:Crear Usuario'])->only(['create','store']);
         $this->middleware(['permission:Actualizar Usuario'])->only(['edit','update']);
         $this->middleware(['permission:Detalle Usuario'])->only(['show']);
-        $this->middleware(['role_or_permission:Listar Emprendimiento|Asesor|Coordinador de emprendimiento'])->only(['emprendimientos']);
     }
 
     /**
@@ -405,6 +404,9 @@ class UsuarioController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function emprendimientos($id){
+        if(!$this->puedeGestionarEmprendimientos()){
+            abort(403);
+        }
         
         $user = User::find($id);
         $emprendimientos = $user->emprendimientos;
@@ -423,6 +425,10 @@ class UsuarioController extends Controller
      */
     public function crearEmprendimiento($id)
     {
+        if(!$this->puedeGestionarEmprendimientos()){
+            abort(403);
+        }
+
         $user = User::find($id);
         return view('basico.usuarios.emprendimientos.create',[
             'usuario'=>$user,
@@ -436,6 +442,9 @@ class UsuarioController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function guardarEmprendimiento(CrearEmprendimientoRequest $request){
+        if(!$this->puedeGestionarEmprendimientos()){
+            abort(403);
+        }
         
         $emprendimiento = new Emprendimiento();
         $emprendimiento->nombre = $request->nombre;
@@ -467,6 +476,9 @@ class UsuarioController extends Controller
      * @return \Illuminate\Http\Response JSON data<collection> message<text> type<text>
      */
     public function ajaxGuardarEmprendimiento(Request $request){
+        if(!$this->puedeGestionarEmprendimientos()){
+            abort(403);
+        }
 
         if($request->emprendimiento_id != null){
             $emprendimiento = Emprendimiento::find($request->emprendimiento_id);
@@ -496,6 +508,9 @@ class UsuarioController extends Controller
      * @return \Illuminate\Http\Response JSON data<collection> message<text> type<text>
      */
     public function ajaxGetEmprendimiento(Request $request){
+        if(!$this->puedeGestionarEmprendimientos()){
+            abort(403);
+        }
 
         $emprendimiento = Emprendimiento::find($request->emprendimiento_id);
 
@@ -525,6 +540,9 @@ class UsuarioController extends Controller
      * @return \Illuminate\Http\Response JSON data<collection> message<text> type<text> html<structura html>
      */
     public function ajaxListarEmprendimientos(Request $request){
+        if(!$this->puedeGestionarEmprendimientos()){
+            abort(403);
+        }
 
         $user = User::find($request->user_id);
         $html = "<option value=''>Seleccione un emprendimiento</option>";
@@ -539,6 +557,17 @@ class UsuarioController extends Controller
             'type' => '',
             'html' => $html,
         ]);
+    }
+
+    private function puedeGestionarEmprendimientos()
+    {
+        $user = Auth::user();
+
+        return $user && (
+            $user->can('Listar Emprendimiento') ||
+            $user->can('Crear Emprendimiento') ||
+            $user->hasAnyRole(['Asesor','Coordinador de emprendimiento'])
+        );
     }
 
     /**
