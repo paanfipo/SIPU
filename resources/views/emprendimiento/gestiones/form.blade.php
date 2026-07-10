@@ -34,7 +34,7 @@
                                             <td>{{$actividad->nombre}}</td>
                                             <td>{{$cronograma->fecha_hora_inicio}}</td>
                                             <td>{{$cronograma->fecha_hora_fin}}</td>
-                                            <td>{{$cronograma->asesor->name}}</td>
+                                            <td>{{ optional($cronograma->asesor)->name }}</td>
                                             <td>
                                                 <div class="col-md-12">
                                                     <div class="row align-items-center">

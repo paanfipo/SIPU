@@ -15,9 +15,9 @@
               </tr>
               <tr>
                 <th>Fecha Inicio: </th>
-                <td>@if( $convocatoria !== null) <input class="form-control" id="fecha_inicio" value="{{$convocatoria->fecha_inicio->format('Y-m-d')}}" disabled> @endif</td>
+                <td>@if( $convocatoria !== null) <input class="form-control" id="fecha_inicio" value="{{ optional($convocatoria->fecha_inicio)->format('Y-m-d') }}" disabled> @endif</td>
                 <th>Fecha Fin: </th>
-                <td>@if( $convocatoria !== null) <input class="form-control" id="fecha_fin" value="{{$convocatoria->fecha_fin->format('Y-m-d')}}" disabled> @endif</td>        
+                <td>@if( $convocatoria !== null) <input class="form-control" id="fecha_fin" value="{{ optional($convocatoria->fecha_fin)->format('Y-m-d') }}" disabled> @endif</td>
               </tr>
             </tbody>
         </table>
