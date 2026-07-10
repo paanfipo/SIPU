@@ -100,7 +100,7 @@
             <input   class="form-control"                 
                 type="date"
                 name="fecha_cierre_vacante"
-                @if(isset($oferta)) value="{{$oferta->fecha_cierre_vacante->format('Y-m-d')}}" @endif
+                @if(isset($oferta)) value="{{ optional($oferta->fecha_cierre_vacante)->format('Y-m-d') }}" @endif
                 required>
         </div>
     </div>

@@ -30,8 +30,8 @@
                             <td>{{$loop->iteration}}</td>
                             <td>{{$concovatoria->nombre}}</td>
                             <td>{{$concovatoria->estado}}</td>
-                            <td>{{$concovatoria->fecha_inicio->format('Y-m-d')}}</td>
-                            <td>{{$concovatoria->fecha_fin->format('Y-m-d')}}</td>
+                            <td>{{ optional($concovatoria->fecha_inicio)->format('Y-m-d') }}</td>
+                            <td>{{ optional($concovatoria->fecha_fin)->format('Y-m-d') }}</td>
                             <td>{{$concovatoria->created_at}}</td>
                             <td>{{$concovatoria->updated_at}}</td>
                             <td>

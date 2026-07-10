@@ -15,9 +15,9 @@
               </tr>
               <tr>
                 <th>Fecha Inicio: </th>
-                <td>@if( $convocatoria !== null) {{$convocatoria->fecha_inicio->format('Y-m-d')}} @endif</td>
+                <td>@if( $convocatoria !== null) {{ optional($convocatoria->fecha_inicio)->format('Y-m-d') }} @endif</td>
                 <th>Fecha Fin: </th>
-                <td>@if( $convocatoria !== null) {{$convocatoria->fecha_fin->format('Y-m-d')}} @endif</td>        
+                <td>@if( $convocatoria !== null) {{ optional($convocatoria->fecha_fin)->format('Y-m-d') }} @endif</td>
               </tr>
             </tbody>
         </table>

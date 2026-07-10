@@ -27,7 +27,7 @@
                                 type="date"
                                 id="fecha_inicio" 
                                 name="fecha_inicio"
-                                @if( isset($convocatoria)) value="{{$convocatoria->fecha_inicio->format('Y-m-d')}}" @endif 
+                                @if( isset($convocatoria)) value="{{ optional($convocatoria->fecha_inicio)->format('Y-m-d') }}" @endif
                                  required>
                 </div>
             </div>
@@ -39,7 +39,7 @@
                             type="date" 
                             id="fecha_fin" 
                             name="fecha_fin" 
-                            @if( isset($convocatoria)) value="{{$convocatoria->fecha_fin->format('Y-m-d')}}" @endif 
+                            @if( isset($convocatoria)) value="{{ optional($convocatoria->fecha_fin)->format('Y-m-d') }}" @endif
                             required>
                 </div>
             </div>

@@ -49,7 +49,7 @@
                                                         <div class="col-10">
                                                         <input class="form-control" 
                                                                     @if($cronograma) 
-                                                                        value="{{str_replace(' ','T',$cronograma->fecha_hora_inicio->format('Y-m-d H:i:s'))}}"                                                                                                                                             
+                                                                        value="{{str_replace(' ','T',optional($cronograma->fecha_hora_inicio)->format('Y-m-d H:i:s'))}}"
                                                                     @endif                                                                 
                                                                     type="datetime-local"
                                                                     id="fecha_hora_inicio_{{$actividad->id}}" 
@@ -63,7 +63,7 @@
                                                         <label for="fecha_hora_fin_{{$actividad->id}}" class="col-6 col-form-label">Fecha y hora fin: *</label>
                                                         <div class="col-10">
                                                         <input class="form-control" 
-                                                                @if( $cronograma ) value="{{str_replace(' ','T',$cronograma->fecha_hora_fin->format('Y-m-d H:i:s'))}}" @endif 
+                                                                @if( $cronograma ) value="{{str_replace(' ','T',optional($cronograma->fecha_hora_fin)->format('Y-m-d H:i:s'))}}" @endif
                                                                 type="datetime-local" 
                                                                 id="fecha_hora_fin_{{$actividad->id}}" 
                                                                 data-date-format="DD-MM-YYYY HH:mm:ss" 

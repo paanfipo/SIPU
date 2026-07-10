@@ -34,7 +34,7 @@
                                     <td>{{$oferta->tipoOferta->nombre}}</td>
                                     <td>{{$oferta->nombre_oferta}}</td>
                                     <td>{{$oferta->created_at}}</td>
-                                    <td>{{$oferta->fecha_cierre_vacante->format('Y-m-d')}}</td>
+                                    <td>{{ optional($oferta->fecha_cierre_vacante)->format('Y-m-d') }}</td>
                                     <td>#{{$user->id}} {{$user->name}}</td>
                                     <td>{{$user->pivot->estado ? 'Activo':'Inactivo'}}</td>
                                     <td>{{$oferta->faseLst()[$user->pivot->fase] }}</td>

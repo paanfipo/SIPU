@@ -53,7 +53,7 @@
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label for="fecha_cierre_vacante">Fecha Cierre</label>
-                                            <input type="text" name="fecha_cierre_vacante" class="form-control" value="{{$tramite->fecha_cierre_vacante->format('Y-m-d')}}" required>
+                                            <input type="text" name="fecha_cierre_vacante" class="form-control" value="{{ optional($tramite->fecha_cierre_vacante)->format('Y-m-d') }}" required>
                                         </div>
                                     </div>
                                     

@@ -33,7 +33,7 @@
                         <tr>
                             <td>{{$loop->iteration}}</td>
                             <td>{{$actividad->nombre}}</td>
-                            <td>{{$actividad->etapa->nombre}}</td>
+                            <td>{{ optional($actividad->etapa)->nombre }}</td>
                             <td>{{$actividad->created_at}}</td>
                             <td>{{$actividad->updated_at}}</td>
                             <td>
