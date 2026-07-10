@@ -559,11 +559,15 @@ class ConvocatoriaController extends Controller
     public function accionLinkPublicoRegistro(LinkRegistroRequest $request){
         //dd($request->all());
 
+        $warning = null;
         DB::beginTransaction();
         try {
 
             $user = User::where('email',$request->email)->first();
             $convocatoria = Convocatoria::find($request->convocatoria_id);
+            if($convocatoria == null){
+                throw new \Exception('La convocatoria no existe.');
+            }
             
             if($user == null){
                 //Registrar el usuario
@@ -588,26 +592,34 @@ class ConvocatoriaController extends Controller
                 $this->registroConvocatoria($user,$emprendimiento,$request->convocatoria_id);
 
                 //Se genera notificación para que el usuario llene el formulario de caracterizacion emprendimiento en la etapa de sensibilización prerequisito para seguir
-                $etapa = Etapa::where('nombre','SENSIBILIZACIÓN')->first();
-                if($etapa == null){
+                try {
+                    $etapa = Etapa::where('nombre','SENSIBILIZACIÓN')->first();
+                    if($etapa == null){
                     throw new \Exception('No existe la etapa SENSIBILIZACIÓN.');
                 }
 
-                $actividades = $etapa->actividades;
-                if(count($actividades) == 0){
-                    throw new \Exception('La etapa SENSIBILIZACIÓN no tiene actividades registradas.');
-                }
+                    $actividades = $etapa->actividades;
+                    if(count($actividades) == 0){
+                        throw new \Exception('La etapa SENSIBILIZACIÓN no tiene actividades registradas.');
+                    }
 
-                $cronograma = Cronograma::where('convocatoria_id',$convocatoria->id)->where('actividad_id',$actividades[0]->id)->first();
-                if($cronograma == null){
+                    $cronograma = Cronograma::where('convocatoria_id',$convocatoria->id)->where('actividad_id',$actividades[0]->id)->first();
+                    if($cronograma == null){
                     throw new \Exception('La convocatoria no tiene cronograma registrado para la primera actividad de sensibilización.');
                 }
 
-                $return_noty = $this->envioNotificacion($user,$convocatoria,$cronograma);
+                    $return_noty = $this->envioNotificacion($user,$convocatoria,$cronograma);
 
-                if($return_noty['type'] == "error"){
-                    return back()
-                    ->with('error', "Hubo un error comuniquese con soporte!!<br>".$return_noty['mensaje'])->withInput();
+                    if($return_noty['type'] == "error"){
+                        $warning = $return_noty['mensaje'];
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('No se pudo enviar notificacion de registro publico', [
+                        'convocatoria_id' => $request->convocatoria_id,
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $warning = 'El registro fue exitoso, pero no se pudo enviar la notificacion.';
                 }
                 
             }
@@ -623,8 +635,14 @@ class ConvocatoriaController extends Controller
                 ->with('error', "Hubo un error comuniquese con soporte!!<br>".$e->getMessage())->withInput();
         }
 
-        return redirect()->route('convocatoria.linkPublicoRegistro',$request->convocatoria_id)
-            ->with('info', 'Registro exitoso !!');   
+        $response = redirect()->route('convocatoria.linkPublicoRegistro',$request->convocatoria_id)
+            ->with('info', 'Registro exitoso !!');
+
+        if($warning != null){
+            $response->with('warning', $warning);
+        }
+
+        return $response;
     }
 
     /**

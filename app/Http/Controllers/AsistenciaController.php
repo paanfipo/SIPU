@@ -270,7 +270,7 @@ class AsistenciaController extends Controller
      * @return void
      */
     public function registrarse($user_id,$convocatoria_id,$etapa_id){
-        
+
         $mensaje = "";
         DB::beginTransaction();
         try {
@@ -814,101 +814,131 @@ class AsistenciaController extends Controller
      */
     public function generarAsistencia(Request $request){
 
-        $mensaje = "";
-        $type = "info";
-        $etapa = null;
         try {
-            DB::beginTransaction();
+            $etapa = null;
 
-            $convocatoria = Convocatoria::find($request->convocatoria);
-            if($convocatoria === null){
-                throw new \Exception('La convocatoria no existe.');
-            }
+            DB::transaction(function () use ($request, &$etapa) {
+                $convocatoria = DB::table('convocatorias')->where('id',$request->convocatoria)->first();
+                if($convocatoria === null){
+                    throw new \Exception('La convocatoria no existe.');
+                }
 
-            $cronograma = Cronograma::where('id',$request->cronograma)
-                ->where('convocatoria_id',$convocatoria->id)
-                ->first();
-            if($cronograma === null){
-                throw new \Exception('El cronograma no existe para esta convocatoria.');
-            }
+                $cronograma = DB::table('cronogramas')
+                    ->where('id',$request->cronograma)
+                    ->where('convocatoria_id',$convocatoria->id)
+                    ->first();
+                if($cronograma === null){
+                    throw new \Exception('El cronograma no existe para esta convocatoria.');
+                }
 
-            $actividad = Actividad::find($request->actividad);
-            if($actividad === null){
-                throw new \Exception('La actividad no existe.');
-            }
+                $actividad = DB::table('actividades')->where('id',$request->actividad)->first();
+                if($actividad === null){
+                    throw new \Exception('La actividad no existe.');
+                }
 
-            $etapa = $convocatoria->etapas()->where('etapas.id',$request->etapa)->first();
-            if($etapa === null){
-                throw new \Exception('La etapa no esta asociada a esta convocatoria.');
-            }
+                $etapa = DB::table('convocatoria_etapa')
+                    ->join('etapas', 'etapas.id', '=', 'convocatoria_etapa.etapa_id')
+                    ->where('convocatoria_etapa.convocatoria_id',$convocatoria->id)
+                    ->where('convocatoria_etapa.etapa_id',$request->etapa)
+                    ->select('etapas.id','etapas.nombre','convocatoria_etapa.posicion')
+                    ->first();
+                if($etapa === null){
+                    throw new \Exception('La etapa no esta asociada a esta convocatoria.');
+                }
 
-            if((int) $cronograma->etapa_id !== (int) $etapa->id || (int) $cronograma->actividad_id !== (int) $actividad->id){
-                throw new \Exception('El cronograma no corresponde a la etapa o actividad seleccionada.');
-            }
+                if((int) $cronograma->etapa_id !== (int) $etapa->id || (int) $cronograma->actividad_id !== (int) $actividad->id){
+                    throw new \Exception('El cronograma no corresponde a la etapa o actividad seleccionada.');
+                }
 
-            $registrados = $convocatoria->registrados()->get();
+                $registrados = DB::table('convocatoria_etapa_user')
+                    ->where('convocatoria_id',$convocatoria->id)
+                    ->where('etapa_id',$etapa->id)
+                    ->select('user_id','emprendimiento')
+                    ->distinct()
+                    ->get();
 
-            foreach($registrados as $registrado){
-                $bandera = true;
-                //Orden de etapas según la convocatoria
-                //Posición de la etapa que se envia
-                $posicion_etapa = $etapa->pivot->posicion;
-                
-                if($posicion_etapa > 1){
-                    $posicion_etapa--;
-                    //Se obtiene la etapa anterior a la que se envia por medio de la posicion
-                    $etapa_evaluar = $convocatoria->etapasxposicion($posicion_etapa)->first();
-                    if($etapa_evaluar === null){
+                if(count($registrados) === 0){
+                    throw new \Exception('No hay usuarios registrados en esta etapa de la convocatoria.');
+                }
+
+                $etapaAnteriorId = null;
+                if($etapa->posicion > 1){
+                    $etapaAnterior = DB::table('convocatoria_etapa')
+                        ->where('convocatoria_id',$convocatoria->id)
+                        ->where('posicion',$etapa->posicion - 1)
+                        ->first();
+                    if($etapaAnterior === null){
                         throw new \Exception('No se encontro la etapa anterior de la convocatoria.');
                     }
-                    // se consulta si el registrado a quien se la va crear la asistencia en este cronograma, ya finalizo la etapa anterior a la que se envia
-                    $usuario_valido = $convocatoria->registrados()->wherePivot('etapa_id',$etapa_evaluar->id)->wherePivot('finalizado',true)->where('id',$registrado->id)->first();
-                    //Si el usuario no ha finalizado la etapa anterior no se crea el registro de asistencia del cronograma actual
-                    if($usuario_valido == null){
-                        $bandera = false;
+                    $etapaAnteriorId = $etapaAnterior->etapa_id;
+                }
+
+                foreach($registrados as $registrado){
+                    if($etapaAnteriorId !== null){
+                        $usuarioValido = DB::table('convocatoria_etapa_user')
+                            ->where('convocatoria_id',$convocatoria->id)
+                            ->where('etapa_id',$etapaAnteriorId)
+                            ->where('user_id',$registrado->user_id)
+                            ->where('finalizado',true)
+                            ->exists();
+
+                        if(! $usuarioValido){
+                            continue;
+                        }
+                    }
+
+                    $emprendimiento = null;
+                    if($registrado->emprendimiento !== null && (int) $registrado->emprendimiento > 0){
+                        $emprendimientoExiste = DB::table('emprendimientos')->where('id',$registrado->emprendimiento)->exists();
+                        $emprendimiento = $emprendimientoExiste ? $registrado->emprendimiento : null;
+                    }
+
+                    $asistencia = DB::table('asistencia')
+                        ->where('cronograma_id',$cronograma->id)
+                        ->where('user_id',$registrado->user_id)
+                        ->first();
+
+                    $datosAsistencia = [
+                        'cronograma_id' => $cronograma->id,
+                        'user_id' => $registrado->user_id,
+                        'asistencia' => false,
+                        'emprendimiento_id' => $emprendimiento,
+                        'user_created_at' => \Auth::user()->id,
+                        'user_updated_at' => \Auth::user()->id,
+                        'updated_at' => now(),
+                    ];
+
+                    if($asistencia === null){
+                        $datosAsistencia['created_at'] = now();
+                        DB::table('asistencia')->insert($datosAsistencia);
+                    }else{
+                        unset($datosAsistencia['user_created_at']);
+                        DB::table('asistencia')->where('id',$asistencia->id)->update($datosAsistencia);
                     }
                 }
+            });
 
-                if($bandera){
+            return response()->json([
+                'message' => 'El listado de asistencia se creo con exito !',
+                'etapa' => ($etapa !== null) ? $etapa->nombre : null,
+                'type' => 'info',
+            ]);
 
-                    $asistencia = Asistencia::where('cronograma_id',$request->cronograma)->where('user_id',$registrado->id)->first();
-                    if($asistencia == null){
-                        $asistencia = new Asistencia();
-                    }  
-
-                    $asistencia->cronograma_id = $request->cronograma;
-                    $asistencia->user_id = $registrado->id;
-                    $asistencia->asistencia = false;
-                    $asistencia->emprendimiento_id = $registrado->pivot->emprendimiento;
-                    $asistencia->user_created_at =\Auth::user()->id;
-                    $asistencia->user_updated_at = \Auth::user()->id;
-                    $asistencia->save();
-                }
-                
-            }
-
-            DB::commit();
-
-        }catch (\Exception $e) {
-            DB::rollBack();
-            $mensaje = "Hubo un error en registrar asistencia comuniquese con soporte!!<br>".$e->getMessage();
         } catch (\Throwable $e) {
-            DB::rollBack();
-            $mensaje = "Hubo un error en registrar asistencia comuniquese con soporte!!<br>".$e->getMessage();
-        }
+            \Log::error('Error generando asistencia', [
+                'convocatoria' => $request->convocatoria,
+                'etapa' => $request->etapa,
+                'actividad' => $request->actividad,
+                'cronograma' => $request->cronograma,
+                'error' => $e->getMessage(),
+            ]);
 
-        if($mensaje != ""){
-            $type = "error";
-        }else{
-            $mensaje = "El listado de asistencia se creo con exito !";
-            $type = "info";
+            return response()->json([
+                'message' => "Hubo un error en registrar asistencia comuniquese con soporte!!<br>".$e->getMessage(),
+                'etapa' => null,
+                'type' => 'error',
+            ]);
         }
-        
-        return response()->json([
-            'message' => $mensaje,
-            'etapa' => ($etapa !== null) ? $etapa->nombre : null,
-            'type' => $type,
-        ]);
 
     }
     
