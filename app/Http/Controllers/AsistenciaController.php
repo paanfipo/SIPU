@@ -815,18 +815,42 @@ class AsistenciaController extends Controller
     public function generarAsistencia(Request $request){
 
         $mensaje = "";
-        DB::beginTransaction();
+        $type = "info";
+        $etapa = null;
         try {
+            DB::beginTransaction();
 
-            $convocatoria = Convocatoria::find($request->convocatoria);           
-           
+            $convocatoria = Convocatoria::find($request->convocatoria);
+            if($convocatoria === null){
+                throw new \Exception('La convocatoria no existe.');
+            }
+
+            $cronograma = Cronograma::where('id',$request->cronograma)
+                ->where('convocatoria_id',$convocatoria->id)
+                ->first();
+            if($cronograma === null){
+                throw new \Exception('El cronograma no existe para esta convocatoria.');
+            }
+
             $actividad = Actividad::find($request->actividad);
-            $registrados = $convocatoria->registrados;
+            if($actividad === null){
+                throw new \Exception('La actividad no existe.');
+            }
+
+            $etapa = $convocatoria->etapas()->where('etapas.id',$request->etapa)->first();
+            if($etapa === null){
+                throw new \Exception('La etapa no esta asociada a esta convocatoria.');
+            }
+
+            if((int) $cronograma->etapa_id !== (int) $etapa->id || (int) $cronograma->actividad_id !== (int) $actividad->id){
+                throw new \Exception('El cronograma no corresponde a la etapa o actividad seleccionada.');
+            }
+
+            $registrados = $convocatoria->registrados()->get();
 
             foreach($registrados as $registrado){
                 $bandera = true;
                 //Orden de etapas según la convocatoria
-                $etapa = $convocatoria->etapas()->where('id',$request->etapa)->first();
                 //Posición de la etapa que se envia
                 $posicion_etapa = $etapa->pivot->posicion;
                 
@@ -834,6 +858,9 @@ class AsistenciaController extends Controller
                     $posicion_etapa--;
                     //Se obtiene la etapa anterior a la que se envia por medio de la posicion
                     $etapa_evaluar = $convocatoria->etapasxposicion($posicion_etapa)->first();
+                    if($etapa_evaluar === null){
+                        throw new \Exception('No se encontro la etapa anterior de la convocatoria.');
+                    }
                     // se consulta si el registrado a quien se la va crear la asistencia en este cronograma, ya finalizo la etapa anterior a la que se envia
                     $usuario_valido = $convocatoria->registrados()->wherePivot('etapa_id',$etapa_evaluar->id)->wherePivot('finalizado',true)->where('id',$registrado->id)->first();
                     //Si el usuario no ha finalizado la etapa anterior no se crea el registro de asistencia del cronograma actual
@@ -863,8 +890,10 @@ class AsistenciaController extends Controller
             DB::commit();
 
         }catch (\Exception $e) {
+            DB::rollBack();
             $mensaje = "Hubo un error en registrar asistencia comuniquese con soporte!!<br>".$e->getMessage();
         } catch (\Throwable $e) {
+            DB::rollBack();
             $mensaje = "Hubo un error en registrar asistencia comuniquese con soporte!!<br>".$e->getMessage();
         }
 
@@ -877,7 +906,7 @@ class AsistenciaController extends Controller
         
         return response()->json([
             'message' => $mensaje,
-            'etapa' => $etapa,
+            'etapa' => ($etapa !== null) ? $etapa->nombre : null,
             'type' => $type,
         ]);
 

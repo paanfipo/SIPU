@@ -373,7 +373,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Oops...',
-                        text: 'Comuníquese con soporte!'
+                        html: data.message
                     });
                 }else{
                     Swal.fire({
@@ -389,6 +389,11 @@
             },
             error: function(data) {
                 console.log('ERROR AJAX: '+data);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    html: (data.responseJSON && data.responseJSON.message) ? data.responseJSON.message : 'No se pudo generar la asistencia.'
+                });
             }
         });
     }
