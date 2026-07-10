@@ -137,54 +137,37 @@
                                                                                             </div>
                                                                                         </td>
                                                                                         <td>
-                                                                                            @if($etapa->nombre === 'SENSIBILIZACIÓN')
+                                                                                            @if(trim($etapa->nombre) == 'SENSIBILIZACIÓN')
+                                                                                                @php
+                                                                                                    $etapaCarac = $convocatoria->etapaAvanceUsuario()->wherePivot('user_id', $asistencia->user_id)->get()->firstWhere('nombre', 'SENSIBILIZACIÓN');
+                                                                                                    $caracterizado = $etapaCarac ? $etapaCarac->pivot->caracterizacion : 0;
+                                                                                                @endphp
                                                                                                 <div class="col-md-12">
-                                                                                                    @php 
-                                                                                                        $etapaAvanceUsuario = $convocatoria->etapaAvanceUsuario()->wherePivot('user_id', $asistencia->user_id)->get();  
-                                                                                                    @endphp
-                                                                                                    @foreach($etapaAvanceUsuario as $etapaCarac)
-                                                                                                        @if($etapaCarac->nombre == 'SENSIBILIZACIÓN')
-                                                                                                        @php 
-                                                                                                            $variablex = [$etapaCarac->pivot->caracterizacion,$convocatoria->id,$etapaCarac->id,$actividad->id,$asistencia->user_id,$cronograma->id]; 
-                                                                                                        @endphp
-                                                                                                        <!--<span>{{var_dump($variablex)}}</span>-->
-                                                                                                                
-                                                                                                            @if($etapaCarac->pivot->caracterizacion == 0)
-                                                                                                                <a href="{{route('asistencia.caracterizacion_sensibilizacion',[$convocatoria->id,$asistencia->user_id])}}" target="_blank"><i class="far fa-thumbs-down fa-2x"></i>Formulario caracterización para pasar de sensibilización a preincubación</a>                                                                                                                                                                   
-                                                                                                            @endif
-
-                                                                                                            @if($etapaCarac->pivot->caracterizacion == 1)
-                                                                                                                <a href="{{route('asistencia.caracterizacion_sensibilizacion',[$convocatoria->id,$asistencia->user_id])}}" target="_blank"><i class="fas fa-thumbs-up fa-2x"></i>Formulario caracterización para pasar de sensibilización a preincubación</a>
-                                                                                                            @endif
-
+                                                                                                    <a href="{{route('asistencia.caracterizacion_sensibilizacion',[$convocatoria->id,$asistencia->user_id])}}" target="_blank">
+                                                                                                        @if($caracterizado)
+                                                                                                            <i class="fas fa-thumbs-up fa-2x"></i>
+                                                                                                        @else
+                                                                                                            <i class="far fa-thumbs-down fa-2x"></i>
                                                                                                         @endif
-                                                                                                        
-                                                                                                    @endforeach                                                                           
-                                                                                                </div> 
-                                                                                            @endif                                                                   
-                                                                                            @if($etapa->nombre === 'INCUBACIÓN (ASESORIAS)')
+                                                                                                        Formulario caracterización para pasar de sensibilización a preincubación
+                                                                                                    </a>
+                                                                                                </div>
+                                                                                            @endif
+                                                                                            @if(trim($etapa->nombre) == 'INCUBACIÓN (ASESORIAS)')
+                                                                                                @php
+                                                                                                    $etapaCarac = $convocatoria->etapaAvanceUsuario()->wherePivot('user_id', $asistencia->user_id)->get()->firstWhere('nombre', 'INCUBACIÓN (ASESORIAS)');
+                                                                                                    $caracterizado = $etapaCarac ? $etapaCarac->pivot->caracterizacion : 0;
+                                                                                                @endphp
                                                                                                 <div class="col-md-12">
-                                                                                                    @php 
-                                                                                                        $etapaAvanceUsuario = $convocatoria->etapaAvanceUsuario()->wherePivot('user_id', $asistencia->user_id)->get();  
-                                                                                                    @endphp
-
-                                                                                                    @foreach($etapaAvanceUsuario as $etapaCarac)                                                                                
-
-                                                                                                        @if($etapaCarac->nombre == 'INCUBACIÓN (ASESORIAS)')
-
-                                                                                                            @if($etapaCarac->pivot->caracterizacion == 0)
-                                                                                                                <a href="{{route('asistencia.caracterizacion_empresarial',[$convocatoria->id,$asistencia->user_id])}}" target="_blank"><i class="far fa-thumbs-down fa-2x"></i>Formulario caracterización para pasar de incubación a aceleración</a>                                                                                                                                                                   
-                                                                                                            @endif
-
-                                                                                                            @if($etapaCarac->pivot->caracterizacion == 1)
-                                                                                                                <a href="{{route('asistencia.caracterizacion_empresarial',[$convocatoria->id,$asistencia->user_id])}}" target="_blank"><i class="fas fa-thumbs-up fa-2x"></i>Formulario caracterización para pasar de incubación a aceleración</a>
-                                                                                                            @endif
-
+                                                                                                    <a href="{{route('asistencia.caracterizacion_empresarial',[$convocatoria->id,$asistencia->user_id])}}" target="_blank">
+                                                                                                        @if($caracterizado)
+                                                                                                            <i class="fas fa-thumbs-up fa-2x"></i>
+                                                                                                        @else
+                                                                                                            <i class="far fa-thumbs-down fa-2x"></i>
                                                                                                         @endif
-                                                                                                        
-                                                                                                    @endforeach
-
-                                                                                                </div> 
+                                                                                                        Formulario caracterización para pasar de incubación a aceleración
+                                                                                                    </a>
+                                                                                                </div>
                                                                                             @endif
                                                                                         </td>
                                                                                         <td>
