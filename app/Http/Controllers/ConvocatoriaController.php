@@ -436,13 +436,11 @@ class ConvocatoriaController extends Controller
 
             if(count($etapas_convo) > 0){
                 foreach($etapas_convo as $etapa){
-                    $sync_data_assig[$etapa->pivot->convocatoria_id] = [
-                        'emprendimiento' => $request->emprendimiento_id,
-                        'finalizado' => $etapa->pivot->finalizado,
-                        'etapa_id' =>  $etapa->pivot->etapa_id,
-                    ];
-
-                    $user->avanceConvocatoriaEtapa($etapa->id,$convocatoria->id)->sync($sync_data_assig);
+                    DB::table('convocatoria_etapa_user')
+                        ->where('user_id',$user->id)
+                        ->where('convocatoria_id',$convocatoria->id)
+                        ->where('etapa_id',$etapa->id)
+                        ->update(['emprendimiento' => $request->emprendimiento_id]);
                 }
             }
 

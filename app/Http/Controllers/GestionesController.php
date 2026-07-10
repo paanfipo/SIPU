@@ -11,6 +11,9 @@ use App\File;
 use App\Cronograma;
 use App\Convocatoria;
 
+//Query
+use DB;
+
 //Mails
 use App\Mail\EmailNovedades;
 use Illuminate\Support\Facades\Mail;
@@ -268,13 +271,11 @@ class GestionesController extends Controller
 
             if(count($etapas_convo) > 0){
                 foreach($etapas_convo as $etapa){
-                    $sync_data_assig[$etapa->pivot->convocatoria_id] = [
-                        'emprendimiento' => $request->emprendimiento,
-                        'finalizado' => $etapa->pivot->finalizado,
-                        'etapa_id' =>  $etapa->pivot->etapa_id,
-                    ];
-
-                    $user->avanceConvocatoriaEtapa($etapa->id,$convocatoria->id)->sync($sync_data_assig);
+                    DB::table('convocatoria_etapa_user')
+                        ->where('user_id',$user->id)
+                        ->where('convocatoria_id',$convocatoria->id)
+                        ->where('etapa_id',$etapa->id)
+                        ->update(['emprendimiento' => $request->emprendimiento]);
                 }
             }
             

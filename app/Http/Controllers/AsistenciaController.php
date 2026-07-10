@@ -299,8 +299,9 @@ class AsistenciaController extends Controller
                 
                 if(!(in_array($etapa->id, $arrayid_etapas_registradas)) && $etapa->pivot->posicion == $posicion){  
                     
+                    $emprendimiento = (count($pivot_emprendimiento)>0)? $pivot_emprendimiento[0]->pivot->emprendimiento : null;
                     $sync_data_assig[$etapa->id] = [
-                        'emprendimiento' => (count($pivot_emprendimiento)>0)? $pivot_emprendimiento[0]->pivot->emprendimiento : null,
+                        'emprendimiento' => $emprendimiento,
                         'finalizado' => false,
                         'user_id' => $user_id,
                     ];
@@ -363,14 +364,11 @@ class AsistenciaController extends Controller
             //$convocatoria = Convocatoria::find($convocatoria_id);
             $user = User::find($user_id);
 
-            $sync_data_assig[$convocatoria_id] = [
-                // 'emprendimiento' => null,
-                'finalizado' => true,
-                'etapa_id' => $etapa_id,
-            ];
-
-            //$convocatoria->etapaAvance()->sync($sync_data_assig);
-            $user->avanceConvocatoriaEtapa($etapa_id,$convocatoria_id)->sync($sync_data_assig);
+            DB::table('convocatoria_etapa_user')
+                ->where('user_id',$user_id)
+                ->where('convocatoria_id',$convocatoria_id)
+                ->where('etapa_id',$etapa_id)
+                ->update(['finalizado' => true]);
             
             DB::commit();
         }catch (\Exception $e) {
@@ -410,7 +408,9 @@ class AsistenciaController extends Controller
 
              //Validar si el usuario ya finalizo la etapa
             $bandera_avance = $this->validarAvance($asistencia->user_id,$convovatoria_id,$etapa_id);
-            if($bandera_avance){
+            $bandera_avance_sensibilizacion = $this->validarAvanceCaracterizacionSensibilizacion($asistencia->user_id,$convovatoria_id,$asistencia->id,$etapa_id);
+            $bandera_avance_incubacion = $this->validarAvanceCaracterizacionIncubacion($asistencia->user_id,$convovatoria_id,$asistencia->id,$etapa_id);
+            if($bandera_avance && $bandera_avance_sensibilizacion && $bandera_avance_incubacion){
                 $mensaje  = $this->registrarse($asistencia->user_id,$convovatoria_id,$etapa_id);            
                 //Actualizar avance de la actual
                 $mensaje.= $this->actualizarAvance($asistencia->user_id,$convovatoria_id,$etapa_id);
@@ -574,19 +574,23 @@ class AsistenciaController extends Controller
                 foreach($etapas_convo as $etapa){
 
                     if($etapa->nombre == "SENSIBILIZACIÓN"){
-                        $sync_data_assig[$etapa->pivot->convocatoria_id] = [
-                            'emprendimiento' => $emprendimiento->id,
-                            'finalizado' => $etapa->pivot->finalizado,
-                            'etapa_id' =>  $etapa->pivot->etapa_id,
-                            'convocatoria_id' =>  $etapa->pivot->convocatoria_id,
-                            'caracterizacion' =>  true,
-                        ];
-                        //dd($sync_data_assig);
-                        $user->avanceConvocatoriaEtapa($etapa->id,$convocatoria->id)->sync($sync_data_assig);
+                        DB::table('convocatoria_etapa_user')
+                            ->where('user_id',$user->id)
+                            ->where('convocatoria_id',$convocatoria->id)
+                            ->where('etapa_id',$etapa->id)
+                            ->update([
+                                'emprendimiento' => $emprendimiento->id,
+                                'caracterizacion' => true,
+                            ]);
                         break;
                     }
                    
                 }
+            }
+
+            if($this->validarAvance($user->id,$request->convocatoria,$request->etapa)){
+                $this->registrarse($user->id,$request->convocatoria,$request->etapa);
+                $this->actualizarAvance($user->id,$request->convocatoria,$request->etapa);
             }
             
             DB::commit();
@@ -736,18 +740,20 @@ class AsistenciaController extends Controller
                 foreach($etapas_convo as $etapa){
 
                     if($etapa->nombre == "INCUBACIÓN (ASESORIAS)"){
-                        $sync_data_assig[$etapa->pivot->convocatoria_id] = [
-                            //'emprendimiento' => $emprendimiento->id,
-                            //'finalizado' => $etapa->pivot->finalizado,
-                            'etapa_id' =>  $etapa->pivot->etapa_id,
-                            'caracterizacion' =>  true,
-                        ];
-                        //dd($sync_data_assig);
-                        $usuario->avanceConvocatoriaEtapa($etapa->id,$convocatoria->id)->sync($sync_data_assig);
+                        DB::table('convocatoria_etapa_user')
+                            ->where('user_id',$usuario->id)
+                            ->where('convocatoria_id',$convocatoria->id)
+                            ->where('etapa_id',$etapa->id)
+                            ->update(['caracterizacion' => true]);
                         break;
                     }
                    
                 }
+            }
+
+            if($this->validarAvance($usuario->id,$request->convocatoria,$request->etapa)){
+                $this->registrarse($usuario->id,$request->convocatoria,$request->etapa);
+                $this->actualizarAvance($usuario->id,$request->convocatoria,$request->etapa);
             }
 
             DB::commit();
