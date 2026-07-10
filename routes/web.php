@@ -27,15 +27,15 @@ Route::get('email','HomeController@email')->name('HomeController.email');
 Route::get('registro/empresa','Auth\RegisterController@empresa')->name('registro.empresa');
 Route::post('crear/empresa','Auth\RegisterController@registroEmpresa')->name('crear.empresa');
 
-Auth::routes(['verify' => true]);
+Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home')->middleware('verified');
+Route::get('/home', 'HomeController@index')->name('home');
 
 Route::resource('base','BaseController');
 
 //Route::get('email','BaseController@email');
 
-Route::group(['prefix' => 'config', 'middleware' => ['auth', 'verified']], function() {
+Route::group(['prefix' => 'config', 'middleware' => ['auth']], function() {
 
     //Roles
     Route::resource('roles','RolController');
@@ -51,7 +51,7 @@ Route::group(['prefix' => 'config', 'middleware' => ['auth', 'verified']], funct
 
 });
 
-Route::group(['prefix' => 'basicos', 'middleware' => ['auth', 'verified']], function() {
+Route::group(['prefix' => 'basicos', 'middleware' => ['auth']], function() {
 
     //Usuarios
     Route::resource('usuarios','UsuarioController');
@@ -98,7 +98,7 @@ Route::group(['prefix' => 'basicos', 'middleware' => ['auth', 'verified']], func
     
 });
 
-Route::group(['prefix' => 'emprendimiento', 'middleware' => ['auth', 'verified']], function() {
+Route::group(['prefix' => 'emprendimiento', 'middleware' => ['auth']], function() {
 
     //Convocatorias
     Route::resource('convocatorias','ConvocatoriaController');
@@ -162,7 +162,7 @@ Route::group(['prefix' => 'emprendimiento', 'middleware' => ['auth', 'verified']
 });
 
 //Grupo de rutas del paquete Vacantes
-Route::group(['prefix' => 'vacantes', 'middleware' => ['auth', 'verified']], function() {
+Route::group(['prefix' => 'vacantes', 'middleware' => ['auth']], function() {
 
     //Ofertas
     Route::resource('ofertas', 'OfertaController');
@@ -187,7 +187,7 @@ Route::group(['prefix' => 'vacantes', 'middleware' => ['auth', 'verified']], fun
 });
 
 
-Route::group(['prefix' => 'programacion', 'middleware' => ['auth', 'verified']], function() {
+Route::group(['prefix' => 'programacion', 'middleware' => ['auth']], function() {
     Route::resource('salones',    'SalonesController');
     Route::resource('programas',  'ProgramasController');
 });

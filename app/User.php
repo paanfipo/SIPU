@@ -9,7 +9,6 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 
 //Verificación email
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailVerification;
 
@@ -27,7 +26,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @package Básicos
  * @subpackage Usuarios
  */
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     use Notifiable, HasRoles;
 

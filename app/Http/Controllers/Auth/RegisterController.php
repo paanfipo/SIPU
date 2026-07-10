@@ -91,6 +91,7 @@ class RegisterController extends Controller
         $user_new->name = $data['first_name']." ".$data['last_name'];
         $user_new->email = $data['email'];
         $user_new->state = true;
+        $user_new->email_verified_at = now();
         $user_new->password = Hash::make($data['password']);
         $user_new->save();
 
@@ -131,7 +132,7 @@ class RegisterController extends Controller
             $user_new->name = $request->first_name." ".$request->last_name;
             $user_new->email = $request->email;
             $user_new->password = Hash::make($request->password);
-            //$user_new->email_verified_at = now();
+            $user_new->email_verified_at = now();
             $user_new->save();            
 
             $user_new->assignRole('Empresa');
@@ -208,7 +209,7 @@ class RegisterController extends Controller
                 ->with('error', "Hubo un error comuniquese con soporte!!<br>".$e->getMessage())->withInput();
         }        
         
-        return redirect()->route('login')->with('info', 'Registro exitoso, porfavor ingrese con sus credenciales y verifique el email  !!');   ;   
+        return redirect()->route('login')->with('info', 'Registro exitoso, porfavor ingrese con sus credenciales.');
        
     }
 

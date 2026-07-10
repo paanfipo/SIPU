@@ -561,6 +561,7 @@ class ConvocatoriaController extends Controller
                 $user->email = $request->email;
                 $user->state = true;
                 $user->password = bcrypt($request->password);
+                $user->email_verified_at = now();
                 //$user->user_created_at = \Auth::user()->id;
                 $user->save();
 
